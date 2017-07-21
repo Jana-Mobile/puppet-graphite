@@ -96,6 +96,15 @@ class graphite::config inherits graphite::params {
     default => $::graphite::graphiteweb_install_lib_dir_REAL,
   }
 
+  file { $::graphite::graphiteweb_log_dir_REAL:
+    ensure    => directory,
+    group     => $gr_web_group_REAL,
+    mode      => '0755',
+    owner     => $gr_web_user_REAL,
+    seltype   => 'httpd_sys_rw_content_t',
+    before    => Exec['Initial django db creation'],
+  }
+
   # first init of user db for graphite
   exec { 'Initial django db creation':
     command     => "django-admin.py migrate --settings=graphite.settings --run-syncdb",
@@ -119,7 +128,6 @@ class graphite::config inherits graphite::params {
     $::graphite::storage_dir_REAL,
     $::graphite::rrd_dir_REAL,
     $::graphite::whitelists_dir_REAL,
-    $::graphite::graphiteweb_log_dir_REAL,
     $::graphite::graphiteweb_storage_dir_REAL,
     "${::graphite::base_dir_REAL}/bin"]:
     ensure    => directory,

@@ -96,7 +96,7 @@ class graphite::config inherits graphite::params {
     default => $::graphite::graphiteweb_install_lib_dir_REAL,
   }
 
-  file { $::graphite::graphiteweb_log_dir_REAL:
+  file { [ $::graphite::graphiteweb_log_dir_REAL, $::graphite::storage_dir_REAL ]:
     ensure    => directory,
     group     => $gr_web_group_REAL,
     mode      => '0755',
@@ -125,7 +125,6 @@ class graphite::config inherits graphite::params {
   }
 
   file { [
-    $::graphite::storage_dir_REAL,
     $::graphite::rrd_dir_REAL,
     $::graphite::whitelists_dir_REAL,
     $::graphite::graphiteweb_storage_dir_REAL,

@@ -96,10 +96,20 @@ class graphite::config inherits graphite::params {
     default => $::graphite::graphiteweb_install_lib_dir_REAL,
   }
 
+  file { [ $::graphite::graphiteweb_log_dir_REAL, $::graphite::storage_dir_REAL ]:
+    ensure    => directory,
+    group     => $gr_web_group_REAL,
+    mode      => '0755',
+    owner     => $gr_web_user_REAL,
+    seltype   => 'httpd_sys_rw_content_t',
+    before    => Exec['Initial django db creation'],
+  }
+
   # first init of user db for graphite
   exec { 'Initial django db creation':
-    command     => "${::graphite::gr_python_binary} manage.py syncdb --noinput",
-    cwd         => $graphite_web_managepy_location,
+    command     => "django-admin.py migrate --settings=graphite.settings --run-syncdb",
+    environment => ["PYTHONPATH=${::graphite::graphiteweb_webapp_dir_REAL}"],
+    path        => '/usr/local/bin:/usr/bin:/bin',
     refreshonly => true,
     require     => $syncdb_require,
     subscribe   => Class['graphite::install'],
@@ -115,10 +125,8 @@ class graphite::config inherits graphite::params {
   }
 
   file { [
-    $::graphite::storage_dir_REAL,
     $::graphite::rrd_dir_REAL,
     $::graphite::whitelists_dir_REAL,
-    $::graphite::graphiteweb_log_dir_REAL,
     $::graphite::graphiteweb_storage_dir_REAL,
     "${::graphite::base_dir_REAL}/bin"]:
     ensure    => directory,
@@ -127,6 +135,16 @@ class graphite::config inherits graphite::params {
     owner     => $gr_web_user_REAL,
     seltype   => 'httpd_sys_rw_content_t',
     subscribe => Exec['Initial django db creation'],
+  }
+
+  file { [
+    "${::graphite::graphiteweb_log_dir_REAL}/info.log",
+    "${::graphite::graphiteweb_log_dir_REAL}/exception.log"]:
+    ensure    => file,
+    group     => $gr_web_group_REAL,
+    mode      => '0644',
+    owner     => $gr_web_user_REAL,
+    require   => File[$::graphite::graphiteweb_log_dir_REAL],
   }
 
   # change access permissions for carbon-cache to align with gr_user
